@@ -117,8 +117,19 @@
         label.textContent = task.text;
         if (task.done) label.className = "done";
 
-        row.append(checkbox, label);
-        container.append(row);
+        const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.textContent = "🗑️";
+deleteButton.title = "Удалить задачу";
+
+deleteButton.addEventListener("click", () => {
+  tasks.splice(index, 1);
+  save();
+  render();
+});
+
+row.append(checkbox, label, deleteButton);
+container.append(row);
       });
 
       const completed = tasks.filter(t => t.done).length;
