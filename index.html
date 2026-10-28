@@ -9,35 +9,150 @@
     body {
       font-family: Arial, sans-serif;
       background: #f4f6fa;
-      padding: 40px;
+      padding: 30px;
+      color: #243247;
+    }
+    main {
+      max-width: 650px;
+      margin: auto;
     }
     h1 { color: #17365d; }
-    .task {
+    .panel, .task {
       background: white;
-      padding: 16px;
+      padding: 18px;
+      border-radius: 12px;
       margin: 12px 0;
-      border-radius: 10px;
     }
-    .status { color: #4775b5; }
+    .task {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .task span { flex: 1; }
+    .done { text-decoration: line-through; color: #888; }
+    .progress {
+      height: 10px;
+      background: #e5eaf0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    #bar {
+      height: 100%;
+      width: 0%;
+      background: #299966;
+      transition: width .2s;
+    }
+    form { display: flex; gap: 8px; }
+    input[type=text] {
+      flex: 1;
+      min-width: 0;
+      padding: 12px;
+    }
+    button {
+      background: #17365d;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>Мой трекер задач</h1>
-  <p>Учебный проект, созданный с GPT</p>
+  <main>
+    <h1>Мой трекер задач</h1>
+    <p>Учебный проект, созданный с GPT</p>
 
-  <div class="task">
-    <strong>Изучить GitHub</strong>
-    <p class="status">В работе</p>
-  </div>
+    <div class="panel">
+      <p id="counter">Выполнено: 0 из 3</p>
+      <div class="progress"><div id="bar"></div></div>
+    </div>
 
-  <div class="task">
-    <strong>Научиться работать с GPT</strong>
-    <p class="status">Запланировано</p>
-  </div>
+    <div id="tasks"></div>
 
-  <div class="task">
-    <strong>Создать первое приложение</strong>
-    <p class="status">Запланировано</p>
-  </div>
+    <form id="taskForm" class="panel">
+      <input id="newTask" type="text"
+             placeholder="Новая задача" required>
+      <button type="submit">Добавить</button>
+    </form>
+  </main>
+
+  <script>
+    const initialTasks = [
+      { text: "Изучить GitHub", done: true },
+      { text: "Научиться работать с GPT", done: false },
+      { text: "Создать первое приложение", done: false }
+    ];
+
+    let tasks;
+    try {
+      const saved = JSON.parse(localStorage.getItem("tasks"));
+      tasks = Array.isArray(saved) ? saved : initialTasks;
+    } catch {
+      tasks = initialTasks;
+    }
+
+    function save() {
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+
+    function render() {
+      const container = document.getElementById("tasks");
+      container.replaceChildren();
+
+      tasks.forEach((task, index) => {
+        const row = document.createElement("div");
+        row.className = "task";
+
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = task.done;
+        checkbox.addEventListener("change", () => {
+          tasks[index].done = checkbox.checked;
+          save();
+          render();
+        });
+
+        const label = document.createElement("span");
+        label.textContent = task.text;
+        if (task.done) label.className = "done";
+
+        const deleteButton = document.createElement("button");
+deleteButton.type = "button";
+deleteButton.textContent = "🗑️";
+deleteButton.title = "Удалить задачу";
+
+deleteButton.addEventListener("click", () => {
+  tasks.splice(index, 1);
+  save();
+  render();
+});
+
+row.append(checkbox, label, deleteButton);
+container.append(row);
+      });
+
+      const completed = tasks.filter(t => t.done).length;
+      document.getElementById("counter").textContent =
+        `Выполнено: ${completed} из ${tasks.length}`;
+      document.getElementById("bar").style.width =
+        (tasks.length ? completed / tasks.length * 100 : 0) + "%";
+    }
+
+    document.getElementById("taskForm")
+      .addEventListener("submit", event => {
+        event.preventDefault();
+        const input = document.getElementById("newTask");
+        const text = input.value.trim();
+        if (!text) return;
+        tasks.push({ text, done: false });
+        input.value = "";
+        save();
+        render();
+      });
+
+    render();
+  </script>
 </body>
 </html>
+  
